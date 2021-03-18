@@ -62,6 +62,8 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SendLocation(const FVector& LocationToSend, const FRotator& RotationToSend);
 	
+	FVector TargetLocation;
+
 	/*
 	void ShowDebugMenu();
 	void HideDebugMenu();

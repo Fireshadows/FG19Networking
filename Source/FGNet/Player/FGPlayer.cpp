@@ -46,7 +46,7 @@ void AFGPlayer::BeginPlay()
 		DebugMenuInstance->SetVisibility(ESlateVisibility::Collapsed);
 	}*/
 }
-
+#pragma optimize("", off)
 void AFGPlayer::Tick(float DeltaTime)
 {
 	if (IsLocallyControlled())
@@ -78,9 +78,16 @@ void AFGPlayer::Tick(float DeltaTime)
 		FrameMovement.AddDelta(GetActorForwardVector() * MovementVelocity * DeltaTime);
 		MovementComponent->Move(FrameMovement);
 
+		//Send information
 		Server_SendLocation(GetActorLocation(), GetActorRotation());
 	}
+	else
+	{
+		float time = DeltaTime * 6;
+		SetActorLocation(FMath::Lerp<FVector>(GetActorLocation(), TargetLocation, time));
+	}
 }
+#pragma optimize("", on)
 
 void AFGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -111,7 +118,8 @@ void AFGPlayer::Multicast_SendLocation_Implementation(const FVector& LocationToS
 {
 	if (!IsLocallyControlled())
 	{
-		SetActorLocation(LocationToSend);
+		TargetLocation = LocationToSend;
+		//SetActorLocation(LocationToSend);
 		SetActorRotation(RotationToSend);
 	}
 }
