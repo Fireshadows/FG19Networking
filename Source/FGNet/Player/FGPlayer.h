@@ -9,7 +9,9 @@ class UFGMovementComponent;
 class UStaticMeshComponent;
 class USphereComponent;
 class UFGPlayerSettings;
-//class UFGNetDebugWidget;
+class UFGNetDebugWidget;
+class AFGRocket;
+class AFGPickup;
 
 UCLASS()
 class FGNET_API AFGPlayer : public APawn
@@ -31,22 +33,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Settings)
 	UFGPlayerSettings* PlayerSettings = nullptr;
-
-	/*UPROPERTY(EditAnywhere, Category = Movement)
-	float Acceleration = 500.0f;
-
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (DisplayName = "TurnSpeed"))
-	float TurnSpeedDefault = 100.0f;
-
-	UPROPERTY(EditAnywhere, Category = Movement)
-	float MaxVelocity = 2000.0f;
-
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0, ClampMax = 1.0))
-	float DefaultFriction = 0.75f;
-
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0, ClampMax = 1.0))
-	float BrakingFriction = 0.001f;
-	*/
 	
 	UFUNCTION(BlueprintPure)
 	bool IsBraking() const { return bBrake; }
@@ -54,34 +40,100 @@ public:
 	UFUNCTION(BlueprintPure)
 	int32 GetPing() const;
 
-	//UPROPERTY(EditAnywhere, Category = Debug)
-	//TSubclassOf<UFGNetDebugWidget> DebugMenuClass;
+	UPROPERTY(EditAnywhere, Category = Debug)
+	TSubclassOf<UFGNetDebugWidget> DebugMenuClass;
+	
+
+	void OnPickup(AFGPickup* Pickup);
+
+	UFUNCTION(Server, reliable)
+	void Server_OnPickup(AFGPickup* Pickup);
+
+	UFUNCTION(Client, Reliable)
+	void Client_OnPickupRockets(int32 PickedUpRockets);
+
+
 	UFUNCTION(Server, Unreliable)
 	void Server_SendLocation(const FVector& LocationToSend, const FRotator& RotationToSend);
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SendYaw(float NewYaw);
 
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_SendLocation(const FVector& LocationToSend, const FRotator& RotationToSend);
 	
 	FVector TargetLocation;
 
-	/*
+	
 	void ShowDebugMenu();
 	void HideDebugMenu();
-	*/
+	
+	UFUNCTION(BlueprintPure)
+	int32 GetNumRockets() const { return NumRockets; };
+
+	UFUNCTION(BlueprintImplementableEvent, Category = Player, meta = (DisplayName = "On Num Rockets Changed"))
+	void BP_OnNumRocketsChanged(int32 NewNumRockets);
+
+	int32 GetNumActiveRockets() const;
+	
+	void FireRocket();
+
+	void SpawnRockets();
+
 private:
+	int32 ServerNumRockets = 0;
+	
+	int32 NumRockets = 0;
+
+	FVector GetRocketStartLocation() const;
+
+	AFGRocket* GetFreeRocket() const;
+
+	UFUNCTION(Server, Reliable)
+	void Server_FireRocket(AFGRocket* NewRocket, const FVector& RocketSTartLocation, const FRotator& RocketFacignRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_FireRocket(AFGRocket* NewRocket, const FVector& RocketStartLocation, const FRotator& RocketFacingRotation);
+
+	UFUNCTION(Client, Reliable)
+	void Client_RemoveRocket(AFGRocket* RocketToRemove);
+
+	UFUNCTION(BlueprintCallable)
+	void Cheat_IncreaseRockets(int32 InNumRockets);
+
+	UPROPERTY(Replicated, Transient)
+	TArray<AFGRocket*> RocketInstances;
+
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	TSubclassOf<AFGRocket> RocketClass;
+
+	int32 MaxActiveRockets = 3;
+
+	float FireCooldownElapsed = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = Weapon)
+		bool bUnlimitedRockets = false;
 
 	void Handle_Accelerate(float Value);
 	void Handle_Turn(float Value);
 	void Handle_BrakePressed();
 	void Handle_BrakeReleased();
-	/*
+	void Handle_FirePressed();
+	
 	void Handle_DebugMenuPressed();
+
 	void CreateDebugWidget();
 	
 	UPROPERTY(Transient)
 	UFGNetDebugWidget* DebugMenuInstance = nullptr;
-	*/
+	
 	bool bShowDebugMenu = false;
+
+	UPROPERTY(Replicated)
+	float ReplicatedYaw = 0.0f;
+
+	UPROPERTY(Replicated)
+	FVector ReplicatedLocation;
 
 	float Forward = 0.0f;
 	float Turn = 0.0f;
