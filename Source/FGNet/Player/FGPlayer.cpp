@@ -132,17 +132,21 @@ void AFGPlayer::OnPickup(AFGPickup* Pickup)
 	{
 		Server_OnPickup(Pickup);
 	}
+	else
+		UE_LOG(LogTemp, Warning, TEXT("Player %s has Rockets: %i, Server Rockets: %i"), *GetActorLabel(), NumRockets, ServerNumRockets);
 }
 
 void AFGPlayer::Client_OnPickupRockets_Implementation(int32 PickedUpRockets) {
 	
 	NumRockets += PickedUpRockets;
 	BP_OnNumRocketsChanged(NumRockets);
+
 }
 
 void AFGPlayer::Server_OnPickup_Implementation(AFGPickup* Pickup)
 {
 	ServerNumRockets += Pickup->NumRockets;
+	BP_OnNumRocketsChanged(ServerNumRockets);
 	Client_OnPickupRockets(Pickup->NumRockets);
 }
 
@@ -254,6 +258,7 @@ void AFGPlayer::FireRocket()
 		else
 		{
 			NumRockets--;
+			//BP_OnNumRocketsChanged(NumRockets);
 			NewRocket->StartMoving(GetActorForwardVector(), GetRocketStartLocation());
 			Server_FireRocket(NewRocket, GetRocketStartLocation(), GetActorRotation());
 		}
@@ -310,6 +315,7 @@ void AFGPlayer::Server_FireRocket_Implementation(AFGRocket* NewRocket, const FVe
 		const float DeltaYaw = FMath::FindDeltaAngleDegrees(FacingRotation.Yaw, GetActorForwardVector().Rotation().Yaw) * 0.5f;
 		const FRotator NewFacingRotation = FacingRotation + FRotator(0.0f, DeltaYaw, 0.0f);
 		ServerNumRockets--;
+		//BP_OnNumRocketsChanged(ServerNumRockets);
 		Multicast_FireRocket(NewRocket, RocketStartLocation, NewFacingRotation);
 	}
 }
@@ -331,6 +337,7 @@ void AFGPlayer::Multicast_FireRocket_Implementation(AFGRocket* NewRocket, const 
 	else
 	{
 		NumRockets--;
+		//BP_OnNumRocketsChanged(NumRockets);
 		NewRocket->StartMoving(RocketFacingRotation.Vector(), RocketStartLocation);
 	}
 
@@ -373,4 +380,6 @@ void AFGPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifet
 	DOREPLIFETIME(AFGPlayer, ReplicatedYaw);
 	DOREPLIFETIME(AFGPlayer, ReplicatedLocation);
 	DOREPLIFETIME(AFGPlayer, RocketInstances);
+	DOREPLIFETIME(AFGPlayer, ServerNumRockets);
+	//DOREPLIFETIME(AFGPlayer, NumRockets);
 }

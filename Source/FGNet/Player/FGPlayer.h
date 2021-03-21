@@ -81,8 +81,10 @@ public:
 	void SpawnRockets();
 
 private:
+	UPROPERTY(Replicated)
 	int32 ServerNumRockets = 0;
-	
+
+	//UPROPERTY(Replicated)
 	int32 NumRockets = 0;
 
 	FVector GetRocketStartLocation() const;
