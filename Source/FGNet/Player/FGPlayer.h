@@ -81,6 +81,8 @@ public:
 	void SpawnRockets();
 
 private:
+	void AddMovementVelocity(float DeltaTime);
+
 	UPROPERTY(Replicated)
 	int32 ServerNumRockets = 0;
 
@@ -90,6 +92,12 @@ private:
 	FVector GetRocketStartLocation() const;
 
 	AFGRocket* GetFreeRocket() const;
+
+	UFUNCTION(Server, Unreliable)
+	void Server_SendMovement(const FVector& ClientLocation, float TimeStamp, float ClientForward, float ClientYaw);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_SendMovement(const FVector& InClientLocation, float TimeStamp, float ClientForward, float ClientYaw);
 
 	UFUNCTION(Server, Reliable)
 	void Server_FireRocket(AFGRocket* NewRocket, const FVector& RocketSTartLocation, const FRotator& RocketFacignRotation);
@@ -144,6 +152,15 @@ private:
 	float Yaw = 0.0f;
 	
 	bool bBrake = false;
+
+	float ClientTimeStamp = 0.0f;
+	float ServerTimeStamp = 0.0f;
+	float LastCorrectionDelta = 0.0f;
+
+	UPROPERTY(EditAnywhere)
+	bool bPerformNetworkSmoothing = true;
+
+	FVector OriginalMeshOffset = FVector::ZeroVector;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Collision)
 	USphereComponent* CollisionComponent;

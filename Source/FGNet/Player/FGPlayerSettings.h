@@ -8,7 +8,6 @@ class FGNET_API UFGPlayerSettings : public UDataAsset
 {
 	GENERATED_BODY()
 public:
-
 	UPROPERTY(EditAnywhere, Category = Movement)
 	float Acceleration = 500.0f;
 
@@ -24,6 +23,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0, ClampMax = 1.0))
 	float BrakingFriction = 0.001f;
 
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0))
+	UPROPERTY(EditAnywhere, Category = Fire, meta = (ClampMin = 0.0))
 	float FireCooldown = 0.15f;
 };
